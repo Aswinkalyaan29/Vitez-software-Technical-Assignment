@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>   
+.container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+.form-group {
+        margin-bottom: 15px;
+    }
+    
+ table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+    }
+    
+table, th, td {
+        border: 1px solid #ddd;
+    }
+    
+th, td {
+        padding: 8px;
+        text-align: left;
+    }
+    
+button {
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    
+    button:hover {
+        background-color: #45a049;
+    }
+</style>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function(){
+
+            // Add student details
+            $("#addStudentForm").submit(function(event){
+                event.preventDefault();
+                var studentName = $("#studentName").val();
+                var rollNumber = $("#rollNumber").val();
+                
+                // Send data to backend using AJAX
+                $.ajax({
+                    type: "POST",
+                    url: "backend/add_student.php", // Replace with actual backend URL
+                    data: { studentName: studentName, rollNumber: rollNumber },
+                    success: function(response){
+                        alert("Student added successfully!");
+                        // Clear input fields
+                        $("#studentName").val("");
+                        $("#rollNumber").val("");
+                    },
+                    error: function(xhr, status, error){
+                        alert("An error occurred while adding student: " + error);
+                    }
+                });
+            });
+            
+            // Mark attendance
+            $("#markAttendanceForm").submit(function(event){
+                event.preventDefault();
+                var attendanceDate = $("#attendanceDate").val();
+                
+                
+            });
+            
+            // Load attendance report
+            $.ajax({
+                type: "GET",
+                url: "backend/get_attendance_report.php", // Replace with actual backend URL
+                success: function(response){
+                    $("#attendanceData").html(response);
+                },
+                error: function(xhr, status, error){
+                    alert("An error occurred while loading attendance report: " + error);
+                }
+            });
+        });
+
+        (document).ready(function(){
+            {
+            // Generate table rows for each day of the week
+            var daysOfWeek = {
+                                "Monday": 1,
+                                "Tuesday": 2,
+                                "Wednesday": 3,
+                                "Thursday": 4,
+                                "Friday": 5,
+                                "Saturday": 6,
+                                "Sunday": 7
+                            };
+            var tbody = $('#attendanceTable tbody');
+            daysOfWeek.forEach(function(day) {
+                var row = '<tr><td>' + day + '</td><td><select class="attendance-select" data-day="' + day + '">' +
+                '<option value="Present">Present</option>' +
+                '<option value="Absent">Absent</option>' +
+                '</select></td></tr>';
+            tbody.append(row);
+            });
+        
+
+            // Handle form submission
+            $('#attendanceForm').submit(function(event) {
+                event.preventDefault();
+                var formData = $(this).serializeArray();
+                var attendanceData = {};
+                formData.forEach(function(item) {
+                    attendanceData[item.name] = item.value;
+                });
+
+                // Collect attendance data for each day
+                var attendanceDetails = [];
+                $('.attendance-select').each(function() {
+                    var day = $(this).data('day');
+                    var status = $(this).val();
+                    attendanceDetails.push({ day: day, status: status });
+                });
+
+                attendanceData['attendanceDetails'] = attendanceDetails;
+
+                // Send data to server using AJAX
+                $.ajax({
+                    url: 'process_attendance.php', 
+                    type: 'POST',
+                    data: attendanceData,
+                    success: function(response) {
+                        alert('Attendance submitted successfully!');
+
+                        // Clear form fields after successful submission
+                        $('#attendanceForm')[0].reset();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(error);
+                        alert('Error occurred while submitting attendance!');
+                    }
+                });
+            });
+        });
+
+       
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Add Student Details</h2>
+        <form id="addStudentForm">
+            <input type="text" id="studentName" placeholder="Student Name">
+            <input type="text" id="rollNumber" placeholder="Roll Number">
+            <input type="submit" value="Add Student">
+        </form>
+
+        <h2>Mark Attendance</h2>
+        <form id="markAttendanceForm">
+            <input type="date" id="attendanceDate">
+            <input type="submit" value="Mark Attendance">
+        </form>
+
+        <h2>Student Attendance Report</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Roll Number</th>
+                    <th>Attendance Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="attendanceData">
+                <!-- Attendance data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
